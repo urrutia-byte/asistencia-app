@@ -495,6 +495,44 @@
     }
     .color-opt.selected { border-color: var(--text); }
 
+    /* ── Custom column input ── */
+    .col-input {
+      width: 72px;
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: .85rem;
+      text-align: center;
+      outline: none;
+      font-family: inherit;
+      color: var(--text);
+      transition: border-color .15s;
+    }
+    .col-input:focus { border-color: var(--primary); }
+    .th-custom {
+      position: relative;
+      white-space: nowrap;
+    }
+    .th-custom .del-col {
+      margin-left: 5px;
+      cursor: pointer;
+      opacity: 0;
+      font-size: .7rem;
+      color: var(--danger);
+      transition: opacity .15s;
+      vertical-align: middle;
+    }
+    .th-custom:hover .del-col { opacity: 1; }
+    .th-add-col {
+      cursor: pointer;
+      color: var(--primary);
+      font-size: 1rem;
+      padding: 8px 12px !important;
+      opacity: .6;
+      transition: opacity .15s;
+    }
+    .th-add-col:hover { opacity: 1; }
+
     /* ── Sync indicator ── */
     .sync-indicator {
       display: flex;
@@ -614,16 +652,7 @@
     <!-- Table -->
     <div class="card" style="overflow:auto;">
       <table class="student-table">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Alumno</th>
-            <th>Asistencia</th>
-            <th>Puntos</th>
-            <th>Nota</th>
-            <th></th>
-          </tr>
-        </thead>
+        <thead><tr id="students-thead"></tr></thead>
         <tbody id="students-tbody"></tbody>
       </table>
     </div>
@@ -676,6 +705,21 @@
     <div class="modal-actions">
       <button class="btn btn-outline" onclick="closeModal('modal-course')">Cancelar</button>
       <button class="btn btn-primary" onclick="saveCourse()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL: ADD COLUMN ═══ -->
+<div class="modal-overlay" id="modal-column">
+  <div class="modal" style="max-width:340px;">
+    <h2>Nueva Columna</h2>
+    <div class="field">
+      <label>Nombre de la columna</label>
+      <input type="text" id="column-name" placeholder="Ej: Nota Parcial 1" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('modal-column')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveColumn()">Agregar</button>
     </div>
   </div>
 </div>
@@ -808,6 +852,7 @@ function load() {
   // Escuchar cambios en Firestore en tiempo real
   DOC.onSnapshot(snap => {
     if (snap.exists) {
+      // Firestore tiene datos → usarlos siempre
       const data = snap.data();
       state.courses  = data.courses  || [];
       state.students = data.students || [];
@@ -815,8 +860,11 @@ function load() {
       localStorage.setItem('ac_courses',  JSON.stringify(state.courses));
       localStorage.setItem('ac_students', JSON.stringify(state.students));
       localStorage.setItem('ac_sessions', JSON.stringify(state.sessions));
-      rerenderCurrent();
+    } else if (state.courses.length > 0) {
+      // Firestore vacío pero hay datos locales → subir al servidor
+      save();
     }
+    rerenderCurrent();
     setSyncStatus('synced');
   }, () => setSyncStatus('offline'));
 }
@@ -945,9 +993,20 @@ function renderStudents() {
     <div class="stat-pill"><span class="dot" style="background:var(--border)"></span>Sin marcar: <b>${cN}</b></div>
   `;
 
+  const course = state.courses.find(c => c.id === state.currentCourse);
+  const cols = course.columns || [];
+
+  // Render thead dinámico
+  const thead = document.getElementById('students-thead');
+  thead.innerHTML =
+    `<th>#</th><th>Alumno</th><th>Asistencia</th><th>Puntos</th><th>Nota</th>` +
+    cols.map(c => `<th class="th-custom">${c.name}<span class="del-col" onclick="deleteColumn('${c.id}')" title="Eliminar columna">✕</span></th>`).join('') +
+    `<th class="th-add-col" onclick="openAddColumn()" title="Nueva columna">＋</th>` +
+    `<th></th>`;
+
   const tbody = document.getElementById('students-tbody');
   if (students.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6"><div class="empty"><span>👤</span><p>No hay alumnos. Agrega uno con el botón "+ Alumno".</p></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="${6 + cols.length}"><div class="empty"><span>👤</span><p>No hay alumnos. Agrega uno con el botón "+ Alumno".</p></div></td></tr>`;
     return;
   }
 
@@ -957,6 +1016,14 @@ function renderStudents() {
     const pts = totalPoints(st.id);
     const tr = document.createElement('tr');
     if (r.att) tr.className = `state-${r.att}`;
+
+    const customCells = cols.map(c => {
+      const val = (st.values || {})[c.id] ?? '';
+      return `<td><input class="col-input" type="number" step="0.1" placeholder="—"
+        value="${val}"
+        onchange="setCustomValue('${st.id}','${c.id}',this.value)"
+      /></td>`;
+    }).join('');
 
     tr.innerHTML = `
       <td class="td-num">${i+1}</td>
@@ -981,6 +1048,7 @@ function renderStudents() {
           onchange="setNote('${st.id}',this.value)"
         />
       </td>
+      ${customCells}
       <td>
         <button class="btn btn-sm btn-outline" style="color:var(--danger);border-color:var(--danger);" onclick="deleteStudent('${st.id}')">✕</button>
       </td>
@@ -1241,6 +1309,45 @@ function deleteStudent(id) {
   toast('Alumno eliminado');
 }
 
+// ─── Column CRUD ───
+function openAddColumn() {
+  document.getElementById('column-name').value = '';
+  openModal('modal-column');
+  setTimeout(() => document.getElementById('column-name').focus(), 100);
+}
+
+function saveColumn() {
+  const name = document.getElementById('column-name').value.trim();
+  if (!name) { document.getElementById('column-name').focus(); return; }
+  const course = state.courses.find(c => c.id === state.currentCourse);
+  if (!course.columns) course.columns = [];
+  course.columns.push({ id: uid(), name });
+  save();
+  closeModal('modal-column');
+  renderStudents();
+  toast(`Columna "${name}" agregada`);
+}
+
+function deleteColumn(colId) {
+  if (!confirm('¿Eliminar esta columna? Los valores ingresados se perderán.')) return;
+  const course = state.courses.find(c => c.id === state.currentCourse);
+  course.columns = (course.columns || []).filter(c => c.id !== colId);
+  // Limpiar valores de todos los alumnos
+  state.students.forEach(st => {
+    if (st.values) delete st.values[colId];
+  });
+  save();
+  renderStudents();
+  toast('Columna eliminada');
+}
+
+function setCustomValue(studentId, colId, value) {
+  const st = state.students.find(s => s.id === studentId);
+  if (!st.values) st.values = {};
+  st.values[colId] = value === '' ? '' : parseFloat(value);
+  save();
+}
+
 // ─── Import students ───
 function openImport() { openModal('modal-import'); document.getElementById('import-text').value = ''; }
 function importStudents() {
@@ -1320,6 +1427,7 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') document.querySelectorAll('.modal-overlay.open').forEach(el => el.classList.remove('open'));
   if (e.key === 'Enter' && document.getElementById('modal-student').classList.contains('open')) saveStudent();
   if (e.key === 'Enter' && document.getElementById('modal-course').classList.contains('open')) saveCourse();
+  if (e.key === 'Enter' && document.getElementById('modal-column').classList.contains('open')) saveColumn();
 });
 
 // ─── Toast ───
@@ -1355,7 +1463,6 @@ function seedDemo() {
 
 // ─── Init ───
 load();
-seedDemo();
 renderCourses();
 
 // ─── Service Worker ───
