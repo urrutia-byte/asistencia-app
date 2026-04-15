@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -992,7 +993,6 @@ function renderStudents() {
     <div class="stat-pill"><span class="dot" style="background:var(--border)"></span>Sin marcar: <b>${cN}</b></div>
   `;
 
-  const course = state.courses.find(c => c.id === state.currentCourse);
   const cols = course.columns || [];
 
   // Render thead dinámico
