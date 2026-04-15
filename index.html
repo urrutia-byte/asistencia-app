@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -11,6 +12,9 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Asistencia" />
   <link rel="apple-touch-icon" href="icon.svg" />
+  <!-- Firebase compat SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
   <style>
     :root {
       --primary: #4f46e5;
@@ -491,6 +495,26 @@
     }
     .color-opt.selected { border-color: var(--text); }
 
+    /* ── Sync indicator ── */
+    .sync-indicator {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: .75rem;
+      opacity: .85;
+    }
+    .sync-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .sync-dot.synced  { background: #4ade80; }
+    .sync-dot.syncing { background: #fbbf24; animation: pulse .8s infinite; }
+    .sync-dot.offline { background: #f87171; }
+    @keyframes pulse {
+      0%,100% { opacity: 1; } 50% { opacity: .3; }
+    }
+
     /* ── Toast ── */
     #toast {
       position: fixed;
@@ -532,7 +556,13 @@
 <!-- ═══ HEADER ═══ -->
 <header>
   <h1>📋 Asistencia & Puntos</h1>
-  <div class="breadcrumb" id="breadcrumb"></div>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <div class="sync-indicator">
+      <div class="sync-dot syncing" id="sync-dot"></div>
+      <span id="sync-label">Conectando…</span>
+    </div>
+    <div class="breadcrumb" id="breadcrumb"></div>
+  </div>
 </header>
 
 <!-- ═══ SCREEN: COURSES ═══ -->
@@ -709,6 +739,38 @@
 
 <script>
 // ═══════════════════════════════════════════════
+//  FIREBASE
+// ═══════════════════════════════════════════════
+const firebaseConfig = {
+  apiKey: "AIzaSyB1gstp3rH_yg0SPhj4c9Mfd2Iml4Lonk0",
+  authDomain: "asistencia-app-cd310.firebaseapp.com",
+  projectId: "asistencia-app-cd310",
+  storageBucket: "asistencia-app-cd310.firebasestorage.app",
+  messagingSenderId: "637217808119",
+  appId: "1:637217808119:web:e53d43ea4fcad2a469bdf2"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+db.enablePersistence().catch(() => {});
+const DOC = db.collection('appData').doc('main');
+
+function setSyncStatus(status) {
+  const dot = document.getElementById('sync-dot');
+  const lbl = document.getElementById('sync-label');
+  if (!dot) return;
+  dot.className = `sync-dot ${status}`;
+  lbl.textContent = status === 'synced' ? 'Sincronizado' : status === 'syncing' ? 'Guardando…' : 'Sin conexión';
+}
+
+function rerenderCurrent() {
+  const screens = ['screen-courses','screen-students','screen-history'];
+  const active = screens.find(s => document.getElementById(s).classList.contains('active'));
+  if (active === 'screen-courses') renderCourses();
+  else if (active === 'screen-students') renderStudents();
+  else if (active === 'screen-history') renderHistory();
+}
+
+// ═══════════════════════════════════════════════
 //  DATA MODEL
 //  localStorage keys:
 //    'ac_courses'  → Array<Course>
@@ -738,15 +800,39 @@ function todayStr() {
 }
 
 function load() {
+  // Cargar desde localStorage inmediatamente (para tener datos mientras se conecta)
   state.courses  = JSON.parse(localStorage.getItem('ac_courses')  || '[]');
   state.students = JSON.parse(localStorage.getItem('ac_students') || '[]');
   state.sessions = JSON.parse(localStorage.getItem('ac_sessions') || '[]');
+
+  // Escuchar cambios en Firestore en tiempo real
+  DOC.onSnapshot(snap => {
+    if (snap.exists) {
+      const data = snap.data();
+      state.courses  = data.courses  || [];
+      state.students = data.students || [];
+      state.sessions = data.sessions || [];
+      localStorage.setItem('ac_courses',  JSON.stringify(state.courses));
+      localStorage.setItem('ac_students', JSON.stringify(state.students));
+      localStorage.setItem('ac_sessions', JSON.stringify(state.sessions));
+      rerenderCurrent();
+    }
+    setSyncStatus('synced');
+  }, () => setSyncStatus('offline'));
 }
 
 function save() {
   localStorage.setItem('ac_courses',  JSON.stringify(state.courses));
   localStorage.setItem('ac_students', JSON.stringify(state.students));
   localStorage.setItem('ac_sessions', JSON.stringify(state.sessions));
+  setSyncStatus('syncing');
+  DOC.set({
+    courses:  state.courses,
+    students: state.students,
+    sessions: state.sessions,
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+  }).then(() => setSyncStatus('synced'))
+    .catch(() => setSyncStatus('offline'));
 }
 
 function uid() {
