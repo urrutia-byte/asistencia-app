@@ -1,0 +1,1283 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Asistencia & Puntos</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#4f46e5" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Asistencia" />
+  <link rel="apple-touch-icon" href="icon.svg" />
+  <style>
+    :root {
+      --primary: #4f46e5;
+      --primary-dark: #3730a3;
+      --primary-light: #e0e7ff;
+      --success: #16a34a;
+      --success-light: #dcfce7;
+      --danger: #dc2626;
+      --danger-light: #fee2e2;
+      --warning: #d97706;
+      --warning-light: #fef3c7;
+      --neutral: #6b7280;
+      --neutral-light: #f3f4f6;
+      --border: #e5e7eb;
+      --text: #111827;
+      --text-muted: #6b7280;
+      --bg: #f9fafb;
+      --card: #ffffff;
+      --radius: 12px;
+      --shadow: 0 1px 3px rgba(0,0,0,.1), 0 1px 2px rgba(0,0,0,.06);
+      --shadow-md: 0 4px 6px rgba(0,0,0,.07), 0 2px 4px rgba(0,0,0,.06);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--primary);
+      color: #fff;
+      padding: 0 24px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 8px rgba(79,70,229,.35);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    header h1 { font-size: 1.1rem; font-weight: 700; letter-spacing: -.3px; }
+    header .breadcrumb {
+      font-size: .8rem;
+      opacity: .8;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    header .breadcrumb span { cursor: pointer; }
+    header .breadcrumb span:hover { text-decoration: underline; }
+
+    /* ── Main layout ── */
+    main { max-width: 960px; margin: 0 auto; padding: 28px 16px; }
+
+    /* ── Section title ── */
+    .section-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .section-sub {
+      color: var(--text-muted);
+      font-size: .9rem;
+      margin-bottom: 24px;
+    }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 18px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-size: .875rem;
+      font-weight: 600;
+      transition: background .15s, transform .1s;
+    }
+    .btn:active { transform: scale(.97); }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-outline {
+      background: transparent;
+      border: 1.5px solid var(--border);
+      color: var(--text);
+    }
+    .btn-outline:hover { background: var(--neutral-light); }
+    .btn-danger { background: var(--danger); color: #fff; }
+    .btn-danger:hover { background: #b91c1c; }
+    .btn-sm { padding: 5px 12px; font-size: .8rem; border-radius: 6px; }
+    .btn-icon {
+      width: 32px; height: 32px;
+      padding: 0;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      transition: background .15s, transform .1s;
+    }
+    .btn-icon:active { transform: scale(.9); }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+    }
+
+    /* ── Course grid ── */
+    #screen-courses { display: none; }
+    #screen-courses.active { display: block; }
+
+    .courses-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px;
+    }
+
+    .course-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      border: 2px solid var(--border);
+      padding: 22px 20px;
+      cursor: pointer;
+      transition: border-color .2s, box-shadow .2s, transform .15s;
+      position: relative;
+      overflow: hidden;
+    }
+    .course-card:hover {
+      border-color: var(--primary);
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+    .course-card .course-icon {
+      width: 44px; height: 44px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      margin-bottom: 12px;
+    }
+    .course-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 4px; }
+    .course-card .meta { font-size: .8rem; color: var(--text-muted); }
+    .course-card .actions {
+      position: absolute;
+      top: 10px; right: 10px;
+      display: flex;
+      gap: 4px;
+      opacity: 0;
+      transition: opacity .2s;
+    }
+    .course-card:hover .actions { opacity: 1; }
+    .course-card .actions button {
+      width: 28px; height: 28px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-size: .85rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .add-course-card {
+      border: 2px dashed var(--border);
+      background: transparent;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 28px 20px;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: border-color .2s, color .2s;
+      border-radius: var(--radius);
+    }
+    .add-course-card:hover { border-color: var(--primary); color: var(--primary); }
+    .add-course-card span { font-size: 2rem; margin-bottom: 6px; }
+    .add-course-card p { font-size: .875rem; font-weight: 600; }
+
+    /* ── Student screen ── */
+    #screen-students { display: none; }
+    #screen-students.active { display: block; }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .toolbar-left { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    /* ── Date selector ── */
+    .date-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 14px;
+      margin-bottom: 20px;
+    }
+    .date-bar label { font-size: .85rem; font-weight: 600; color: var(--text-muted); }
+    .date-bar input[type="date"] {
+      border: none;
+      background: transparent;
+      font-size: .9rem;
+      color: var(--text);
+      cursor: pointer;
+      outline: none;
+      font-family: inherit;
+    }
+    .date-nav button {
+      background: var(--neutral-light);
+      border: none;
+      border-radius: 6px;
+      width: 28px; height: 28px;
+      cursor: pointer;
+      font-size: .9rem;
+    }
+    .date-nav button:hover { background: var(--primary-light); }
+
+    /* ── Stats bar ── */
+    .stats-bar {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    .stat-pill {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-size: .8rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .stat-pill .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+    }
+
+    /* ── Mark-all bar ── */
+    .mark-all-bar {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .mark-all-bar span { font-size: .82rem; color: var(--text-muted); font-weight: 600; }
+
+    /* ── Student table ── */
+    .student-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .student-table thead tr {
+      background: var(--neutral-light);
+      border-radius: 8px;
+    }
+    .student-table th {
+      text-align: left;
+      padding: 10px 14px;
+      font-size: .78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+    .student-table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    .student-table tbody tr:last-child td { border-bottom: none; }
+    .student-table tbody tr { transition: background .1s; }
+    .student-table tbody tr:hover { background: #fafafa; }
+
+    /* Number cell */
+    .td-num { color: var(--text-muted); font-size: .82rem; width: 36px; }
+
+    /* Name cell */
+    .td-name { font-weight: 600; font-size: .9rem; }
+
+    /* Attendance buttons */
+    .attendance-btns { display: flex; gap: 4px; }
+    .att-btn {
+      padding: 4px 10px;
+      border-radius: 6px;
+      border: 1.5px solid transparent;
+      cursor: pointer;
+      font-size: .78rem;
+      font-weight: 700;
+      transition: all .15s;
+    }
+    .att-btn-P { border-color: var(--success); color: var(--success); background: #fff; }
+    .att-btn-P.active { background: var(--success); color: #fff; }
+    .att-btn-P:hover { background: var(--success-light); }
+    .att-btn-P.active:hover { background: var(--success); }
+
+    .att-btn-T { border-color: var(--warning); color: var(--warning); background: #fff; }
+    .att-btn-T.active { background: var(--warning); color: #fff; }
+    .att-btn-T:hover { background: var(--warning-light); }
+    .att-btn-T.active:hover { background: var(--warning); }
+
+    .att-btn-A { border-color: var(--danger); color: var(--danger); background: #fff; }
+    .att-btn-A.active { background: var(--danger); color: #fff; }
+    .att-btn-A:hover { background: var(--danger-light); }
+    .att-btn-A.active:hover { background: var(--danger); }
+
+    /* Points cell */
+    .points-cell { display: flex; align-items: center; gap: 6px; }
+    .points-display {
+      min-width: 38px;
+      text-align: center;
+      font-size: .9rem;
+      font-weight: 700;
+    }
+    .points-display.positive { color: var(--success); }
+    .points-display.negative { color: var(--danger); }
+    .points-display.zero { color: var(--text-muted); }
+    .btn-pts-minus {
+      background: var(--danger-light);
+      color: var(--danger);
+    }
+    .btn-pts-minus:hover { background: var(--danger); color: #fff; }
+    .btn-pts-plus {
+      background: var(--success-light);
+      color: var(--success);
+    }
+    .btn-pts-plus:hover { background: var(--success); color: #fff; }
+
+    /* Notes input */
+    .note-input {
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: .8rem;
+      width: 130px;
+      outline: none;
+      font-family: inherit;
+      color: var(--text);
+      transition: border-color .15s;
+    }
+    .note-input:focus { border-color: var(--primary); }
+
+    /* Row state colors */
+    tr.state-A td { background: #fff5f5; }
+    tr.state-T td { background: #fffbeb; }
+
+    /* ── History view ── */
+    #screen-history { display: none; }
+    #screen-history.active { display: block; }
+
+    .history-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .85rem;
+    }
+    .history-table th {
+      text-align: left;
+      padding: 8px 12px;
+      background: var(--neutral-light);
+      font-size: .75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .4px;
+      color: var(--text-muted);
+    }
+    .history-table td { padding: 8px 12px; border-bottom: 1px solid var(--border); }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: .75rem;
+      font-weight: 700;
+    }
+    .badge-P { background: var(--success-light); color: var(--success); }
+    .badge-A { background: var(--danger-light); color: var(--danger); }
+    .badge-T { background: var(--warning-light); color: var(--warning); }
+    .badge-N { background: var(--neutral-light); color: var(--neutral); }
+
+    /* ── Modals ── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.45);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      padding: 16px;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 28px;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.2);
+    }
+    .modal h2 { font-size: 1.1rem; font-weight: 700; margin-bottom: 18px; }
+    .field { margin-bottom: 14px; }
+    .field label {
+      display: block;
+      font-size: .8rem;
+      font-weight: 600;
+      margin-bottom: 5px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: .4px;
+    }
+    .field input, .field select {
+      width: 100%;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 9px 12px;
+      font-size: .9rem;
+      outline: none;
+      font-family: inherit;
+      color: var(--text);
+      transition: border-color .15s;
+    }
+    .field input:focus, .field select:focus { border-color: var(--primary); }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 8px; }
+
+    /* Emoji picker */
+    .emoji-grid {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 4px;
+      margin-top: 8px;
+    }
+    .emoji-opt {
+      font-size: 1.3rem;
+      text-align: center;
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 6px;
+      transition: background .15s;
+    }
+    .emoji-opt:hover, .emoji-opt.selected { background: var(--primary-light); }
+
+    /* Color picker */
+    .color-grid {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+    .color-opt {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 3px solid transparent;
+      transition: border-color .15s;
+    }
+    .color-opt.selected { border-color: var(--text); }
+
+    /* ── Toast ── */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: #1f2937;
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: .875rem;
+      font-weight: 600;
+      box-shadow: var(--shadow-md);
+      transition: transform .3s cubic-bezier(.34,1.56,.64,1);
+      z-index: 300;
+      white-space: nowrap;
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* ── Empty state ── */
+    .empty {
+      text-align: center;
+      padding: 48px 24px;
+      color: var(--text-muted);
+    }
+    .empty span { font-size: 3rem; display: block; margin-bottom: 12px; }
+    .empty p { font-size: .9rem; }
+
+    /* Responsive */
+    @media(max-width: 600px) {
+      .note-input { width: 90px; }
+      .student-table th:nth-child(5),
+      .student-table td:nth-child(5) { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══ HEADER ═══ -->
+<header>
+  <h1>📋 Asistencia & Puntos</h1>
+  <div class="breadcrumb" id="breadcrumb"></div>
+</header>
+
+<!-- ═══ SCREEN: COURSES ═══ -->
+<main>
+  <div id="screen-courses" class="active">
+    <div class="section-title">Mis Cursos</div>
+    <p class="section-sub">Selecciona un curso para gestionar asistencia y puntos.</p>
+    <div class="courses-grid" id="courses-grid"></div>
+  </div>
+
+  <!-- ═══ SCREEN: STUDENTS ═══ -->
+  <div id="screen-students">
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <button class="btn btn-outline btn-sm" onclick="goBack()">← Volver</button>
+        <button class="btn btn-primary btn-sm" onclick="openAddStudent()">+ Alumno</button>
+        <button class="btn btn-outline btn-sm" onclick="openImport()">⬆ Importar</button>
+      </div>
+      <div class="toolbar-left">
+        <button class="btn btn-outline btn-sm" onclick="showHistory()">📊 Historial</button>
+        <button class="btn btn-outline btn-sm" onclick="exportCSV()">⬇ Exportar</button>
+      </div>
+    </div>
+
+    <!-- Date bar -->
+    <div class="date-bar">
+      <label>Fecha:</label>
+      <div class="date-nav">
+        <button onclick="prevDay()">‹</button>
+      </div>
+      <input type="date" id="session-date" onchange="dateChanged()" />
+      <div class="date-nav">
+        <button onclick="nextDay()">›</button>
+      </div>
+      <span id="date-label" style="font-size:.82rem;color:var(--text-muted);margin-left:4px;"></span>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-bar" id="stats-bar"></div>
+
+    <!-- Mark all -->
+    <div class="mark-all-bar">
+      <span>Marcar todos:</span>
+      <button class="att-btn att-btn-P" onclick="markAll('P')">Presentes</button>
+      <button class="att-btn att-btn-T" onclick="markAll('T')">Tardanza</button>
+      <button class="att-btn att-btn-A" onclick="markAll('A')">Ausentes</button>
+    </div>
+
+    <!-- Table -->
+    <div class="card" style="overflow:auto;">
+      <table class="student-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Alumno</th>
+            <th>Asistencia</th>
+            <th>Puntos</th>
+            <th>Nota</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="students-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══ SCREEN: HISTORY ═══ -->
+  <div id="screen-history">
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <button class="btn btn-outline btn-sm" onclick="showStudents()">← Volver</button>
+      </div>
+      <button class="btn btn-outline btn-sm" onclick="exportHistoryCSV()">⬇ Exportar</button>
+    </div>
+    <div class="section-title" id="history-title">Historial</div>
+    <p class="section-sub">Resumen de asistencia y puntos por alumno.</p>
+
+    <div class="card" style="overflow:auto;margin-bottom:24px;">
+      <table class="history-table" id="history-table">
+        <thead><tr></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="section-title" style="font-size:1.1rem;margin-bottom:12px;">Detalle por fecha</div>
+    <div class="card" style="overflow:auto;">
+      <table class="history-table" id="detail-table">
+        <thead><tr></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<!-- ═══ MODAL: ADD/EDIT COURSE ═══ -->
+<div class="modal-overlay" id="modal-course">
+  <div class="modal">
+    <h2 id="modal-course-title">Nuevo Curso</h2>
+    <div class="field">
+      <label>Nombre del Curso</label>
+      <input type="text" id="course-name" placeholder="Ej: Matemáticas 3°A" />
+    </div>
+    <div class="field">
+      <label>Icono</label>
+      <div class="emoji-grid" id="emoji-grid"></div>
+    </div>
+    <div class="field">
+      <label>Color</label>
+      <div class="color-grid" id="color-grid"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('modal-course')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveCourse()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL: ADD/EDIT STUDENT ═══ -->
+<div class="modal-overlay" id="modal-student">
+  <div class="modal">
+    <h2 id="modal-student-title">Nuevo Alumno</h2>
+    <div class="field">
+      <label>Nombre completo</label>
+      <input type="text" id="student-name" placeholder="Ej: García López, Juan" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('modal-student')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveStudent()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL: IMPORT STUDENTS ═══ -->
+<div class="modal-overlay" id="modal-import">
+  <div class="modal">
+    <h2>Importar Alumnos</h2>
+    <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:14px;">
+      Pega una lista de alumnos, un nombre por línea.
+    </p>
+    <div class="field">
+      <label>Lista de alumnos</label>
+      <textarea id="import-text" rows="10"
+        style="width:100%;border:1.5px solid var(--border);border-radius:8px;padding:10px;font-size:.85rem;font-family:inherit;outline:none;resize:vertical;"
+        placeholder="García López, Juan&#10;Mamani Quispe, Ana&#10;Torres Flores, Luis"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('modal-import')">Cancelar</button>
+      <button class="btn btn-primary" onclick="importStudents()">Importar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL: POINTS REASON ═══ -->
+<div class="modal-overlay" id="modal-pts">
+  <div class="modal" style="max-width:340px;">
+    <h2 id="pts-modal-title">Agregar puntos</h2>
+    <div class="field">
+      <label>Cantidad</label>
+      <input type="number" id="pts-amount" value="1" min="1" max="99" />
+    </div>
+    <div class="field">
+      <label>Motivo (opcional)</label>
+      <input type="text" id="pts-reason" placeholder="Ej: Participación" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('modal-pts')">Cancelar</button>
+      <button class="btn btn-primary" id="pts-confirm-btn" onclick="confirmPoints()">Aplicar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ TOAST ═══ -->
+<div id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════
+//  DATA MODEL
+//  localStorage keys:
+//    'ac_courses'  → Array<Course>
+//    'ac_students' → Array<Student>
+//    'ac_sessions' → Array<Session>
+// ═══════════════════════════════════════════════
+
+const EMOJIS = ['📚','🧮','🔬','🎨','🎵','⚽','💻','🌍','📖','✏️','🔭','🏫','🧪','🎭','🏆','🌱','🦁','🚀'];
+const COLORS = ['#4f46e5','#0891b2','#16a34a','#d97706','#dc2626','#7c3aed','#db2777','#059669','#2563eb','#ea580c'];
+
+let state = {
+  courses: [],
+  students: [],
+  sessions: [],
+  currentCourse: null,
+  currentDate: todayStr(),
+  editCourseId: null,
+  editStudentId: null,
+  selectedEmoji: '📚',
+  selectedColor: COLORS[0],
+  ptsStudentId: null,
+  ptsDelta: 1,
+};
+
+function todayStr() {
+  return new Date().toISOString().slice(0,10);
+}
+
+function load() {
+  state.courses  = JSON.parse(localStorage.getItem('ac_courses')  || '[]');
+  state.students = JSON.parse(localStorage.getItem('ac_students') || '[]');
+  state.sessions = JSON.parse(localStorage.getItem('ac_sessions') || '[]');
+}
+
+function save() {
+  localStorage.setItem('ac_courses',  JSON.stringify(state.courses));
+  localStorage.setItem('ac_students', JSON.stringify(state.students));
+  localStorage.setItem('ac_sessions', JSON.stringify(state.sessions));
+}
+
+function uid() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+}
+
+// ─── Session helpers ───
+function getSession(courseId, date) {
+  return state.sessions.find(s => s.courseId === courseId && s.date === date) || null;
+}
+
+function ensureSession(courseId, date) {
+  let s = getSession(courseId, date);
+  if (!s) {
+    s = { id: uid(), courseId, date, records: {} };
+    state.sessions.push(s);
+  }
+  return s;
+}
+
+function getRecord(session, studentId) {
+  return session.records[studentId] || { att: null, pts: 0, note: '' };
+}
+
+function setRecord(session, studentId, patch) {
+  const r = getRecord(session, studentId);
+  session.records[studentId] = { ...r, ...patch };
+}
+
+// ─── Student helpers ───
+function courseStudents(courseId) {
+  return state.students.filter(s => s.courseId === courseId && !s.deleted);
+}
+
+// ─── Total points for student (all sessions) ───
+function totalPoints(studentId) {
+  return state.sessions.reduce((sum, s) => {
+    const r = s.records[studentId];
+    return sum + (r ? (r.pts || 0) : 0);
+  }, 0);
+}
+
+// ═══════════════════════════════════════════════
+//  RENDERING
+// ═══════════════════════════════════════════════
+
+function showScreen(id) {
+  ['screen-courses','screen-students','screen-history'].forEach(s => {
+    document.getElementById(s).classList.remove('active');
+  });
+  document.getElementById(id).classList.add('active');
+}
+
+// ─── Courses screen ───
+function renderCourses() {
+  showScreen('screen-courses');
+  updateBreadcrumb([]);
+  const grid = document.getElementById('courses-grid');
+  grid.innerHTML = '';
+  state.courses.filter(c => !c.deleted).forEach(c => {
+    const students = courseStudents(c.id);
+    const div = document.createElement('div');
+    div.className = 'course-card';
+    div.innerHTML = `
+      <div class="actions">
+        <button style="background:var(--primary-light);color:var(--primary);" onclick="event.stopPropagation();openEditCourse('${c.id}')">✏️</button>
+        <button style="background:var(--danger-light);color:var(--danger);" onclick="event.stopPropagation();deleteCourse('${c.id}')">🗑</button>
+      </div>
+      <div class="course-icon" style="background:${c.color}22;">${c.icon}</div>
+      <h3>${c.name}</h3>
+      <div class="meta">${students.length} alumno${students.length!==1?'s':''}</div>
+    `;
+    div.addEventListener('click', () => openCourse(c.id));
+    grid.appendChild(div);
+  });
+  // Add card
+  const add = document.createElement('div');
+  add.className = 'add-course-card';
+  add.innerHTML = '<span>+</span><p>Nuevo Curso</p>';
+  add.onclick = () => openAddCourse();
+  grid.appendChild(add);
+}
+
+// ─── Students screen ───
+function renderStudents() {
+  showScreen('screen-students');
+  const course = state.courses.find(c => c.id === state.currentCourse);
+  updateBreadcrumb([{ label: course.name }]);
+
+  document.getElementById('session-date').value = state.currentDate;
+  updateDateLabel();
+
+  const students = courseStudents(state.currentCourse);
+  const session = getSession(state.currentCourse, state.currentDate) || { records: {} };
+
+  // Stats
+  let cP=0, cT=0, cA=0, cN=0;
+  students.forEach(st => {
+    const r = getRecord(session, st.id);
+    if (r.att==='P') cP++;
+    else if (r.att==='T') cT++;
+    else if (r.att==='A') cA++;
+    else cN++;
+  });
+  const statsBar = document.getElementById('stats-bar');
+  statsBar.innerHTML = `
+    <div class="stat-pill"><span class="dot" style="background:var(--success)"></span>Presentes: <b>${cP}</b></div>
+    <div class="stat-pill"><span class="dot" style="background:var(--warning)"></span>Tardanza: <b>${cT}</b></div>
+    <div class="stat-pill"><span class="dot" style="background:var(--danger)"></span>Ausentes: <b>${cA}</b></div>
+    <div class="stat-pill"><span class="dot" style="background:var(--border)"></span>Sin marcar: <b>${cN}</b></div>
+  `;
+
+  const tbody = document.getElementById('students-tbody');
+  if (students.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty"><span>👤</span><p>No hay alumnos. Agrega uno con el botón "+ Alumno".</p></div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = '';
+  students.forEach((st, i) => {
+    const r = getRecord(session, st.id);
+    const pts = totalPoints(st.id);
+    const tr = document.createElement('tr');
+    if (r.att) tr.className = `state-${r.att}`;
+
+    tr.innerHTML = `
+      <td class="td-num">${i+1}</td>
+      <td class="td-name">${st.name}</td>
+      <td>
+        <div class="attendance-btns">
+          <button class="att-btn att-btn-P ${r.att==='P'?'active':''}" onclick="setAtt('${st.id}','P')">P</button>
+          <button class="att-btn att-btn-T ${r.att==='T'?'active':''}" onclick="setAtt('${st.id}','T')">T</button>
+          <button class="att-btn att-btn-A ${r.att==='A'?'active':''}" onclick="setAtt('${st.id}','A')">A</button>
+        </div>
+      </td>
+      <td>
+        <div class="points-cell">
+          <button class="btn-icon btn-pts-minus" onclick="openPtsModal('${st.id}',-1)" title="Quitar puntos">−</button>
+          <span class="points-display ${pts>0?'positive':pts<0?'negative':'zero'}">${pts>0?'+':''}${pts}</span>
+          <button class="btn-icon btn-pts-plus" onclick="openPtsModal('${st.id}',1)" title="Sumar puntos">+</button>
+        </div>
+      </td>
+      <td>
+        <input class="note-input" type="text" placeholder="Nota…"
+          value="${r.note||''}"
+          onchange="setNote('${st.id}',this.value)"
+        />
+      </td>
+      <td>
+        <button class="btn btn-sm btn-outline" style="color:var(--danger);border-color:var(--danger);" onclick="deleteStudent('${st.id}')">✕</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// ─── History screen ───
+function renderHistory() {
+  showScreen('screen-history');
+  const course = state.courses.find(c => c.id === state.currentCourse);
+  document.getElementById('history-title').textContent = `Historial — ${course.name}`;
+  updateBreadcrumb([{ label: course.name, action: showStudents }, { label: 'Historial' }]);
+
+  const students = courseStudents(state.currentCourse);
+  const sessions = state.sessions.filter(s => s.courseId === state.currentCourse).sort((a,b) => a.date.localeCompare(b.date));
+
+  // Summary table
+  const sumTable = document.getElementById('history-table');
+  const sumHead = sumTable.querySelector('thead tr');
+  const sumBody = sumTable.querySelector('tbody');
+  sumHead.innerHTML = '<th>#</th><th>Alumno</th><th>Presentes</th><th>Tardanzas</th><th>Ausencias</th><th>Puntos Totales</th>';
+  sumBody.innerHTML = '';
+  if (students.length === 0) {
+    sumBody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text-muted)">Sin alumnos</td></tr>';
+  } else {
+    students.forEach((st, i) => {
+      let cP=0,cT=0,cA=0;
+      sessions.forEach(s => {
+        const r = s.records[st.id];
+        if (r?.att==='P') cP++;
+        else if (r?.att==='T') cT++;
+        else if (r?.att==='A') cA++;
+      });
+      const pts = totalPoints(st.id);
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${i+1}</td>
+        <td><b>${st.name}</b></td>
+        <td><span class="badge badge-P">${cP}</span></td>
+        <td><span class="badge badge-T">${cT}</span></td>
+        <td><span class="badge badge-A">${cA}</span></td>
+        <td style="font-weight:700;color:${pts>0?'var(--success)':pts<0?'var(--danger)':'var(--text-muted)'}">${pts>0?'+':''}${pts}</td>
+      `;
+      sumBody.appendChild(tr);
+    });
+  }
+
+  // Detail table
+  const detTable = document.getElementById('detail-table');
+  const detHead = detTable.querySelector('thead tr');
+  const detBody = detTable.querySelector('tbody');
+
+  if (sessions.length === 0) {
+    detHead.innerHTML = '<th>Sin sesiones registradas</th>';
+    detBody.innerHTML = '';
+    return;
+  }
+
+  detHead.innerHTML = '<th>Alumno</th>' + sessions.map(s => `<th>${fmtDateShort(s.date)}</th>`).join('');
+  detBody.innerHTML = '';
+  students.forEach(st => {
+    const tr = document.createElement('tr');
+    let cells = `<td><b>${st.name}</b></td>`;
+    sessions.forEach(s => {
+      const r = s.records[st.id];
+      const att = r?.att || '-';
+      const pts = r?.pts || 0;
+      const ptsStr = pts !== 0 ? ` <small style="color:${pts>0?'var(--success)':'var(--danger)'};">${pts>0?'+':''}${pts}pts</small>` : '';
+      cells += `<td><span class="badge badge-${att==='P'||att==='T'||att==='A'?att:'N'}">${att}</span>${ptsStr}</td>`;
+    });
+    tr.innerHTML = cells;
+    detBody.appendChild(tr);
+  });
+}
+
+// ─── Breadcrumb ───
+function updateBreadcrumb(items) {
+  const bc = document.getElementById('breadcrumb');
+  if (items.length === 0) { bc.innerHTML = ''; return; }
+  let html = '<span onclick="renderCourses()">Cursos</span>';
+  items.forEach((it, i) => {
+    html += ' › ';
+    if (it.action) {
+      html += `<span onclick="(${it.action.toString()})()">${it.label}</span>`;
+    } else {
+      html += `<span>${it.label}</span>`;
+    }
+  });
+  bc.innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════
+//  ACTIONS
+// ═══════════════════════════════════════════════
+
+function openCourse(id) {
+  state.currentCourse = id;
+  state.currentDate = todayStr();
+  renderStudents();
+}
+
+function goBack() { renderCourses(); }
+function showStudents() { renderStudents(); }
+function showHistory() { renderHistory(); }
+
+// Attendance
+function setAtt(studentId, att) {
+  const session = ensureSession(state.currentCourse, state.currentDate);
+  const r = getRecord(session, studentId);
+  // toggle off if same
+  setRecord(session, studentId, { att: r.att === att ? null : att });
+  save();
+  renderStudents();
+}
+
+function markAll(att) {
+  const students = courseStudents(state.currentCourse);
+  const session = ensureSession(state.currentCourse, state.currentDate);
+  students.forEach(st => setRecord(session, st.id, { att }));
+  save();
+  renderStudents();
+  toast(`Todos marcados como ${att==='P'?'Presentes':att==='T'?'Tardanza':'Ausentes'}`);
+}
+
+// Notes
+function setNote(studentId, note) {
+  const session = ensureSession(state.currentCourse, state.currentDate);
+  setRecord(session, studentId, { note });
+  save();
+}
+
+// Points modal
+function openPtsModal(studentId, delta) {
+  state.ptsStudentId = studentId;
+  state.ptsDelta = delta;
+  const st = state.students.find(s => s.id === studentId);
+  document.getElementById('pts-modal-title').textContent = delta > 0 ? `➕ Sumar puntos — ${st.name}` : `➖ Quitar puntos — ${st.name}`;
+  document.getElementById('pts-amount').value = 1;
+  document.getElementById('pts-reason').value = '';
+  document.getElementById('pts-confirm-btn').style.background = delta > 0 ? 'var(--success)' : 'var(--danger)';
+  openModal('modal-pts');
+}
+
+function confirmPoints() {
+  const amount = parseInt(document.getElementById('pts-amount').value) || 1;
+  const reason = document.getElementById('pts-reason').value.trim();
+  const delta = state.ptsDelta > 0 ? amount : -amount;
+  const session = ensureSession(state.currentCourse, state.currentDate);
+  const r = getRecord(session, state.ptsStudentId);
+  setRecord(session, state.ptsStudentId, { pts: (r.pts || 0) + delta, note: reason || r.note });
+  save();
+  closeModal('modal-pts');
+  renderStudents();
+  const st = state.students.find(s => s.id === state.ptsStudentId);
+  toast(`${delta>0?'+':''}${delta} puntos a ${st.name}`);
+}
+
+// Date navigation
+function prevDay() {
+  const d = new Date(state.currentDate + 'T12:00:00');
+  d.setDate(d.getDate() - 1);
+  state.currentDate = d.toISOString().slice(0,10);
+  renderStudents();
+}
+function nextDay() {
+  const d = new Date(state.currentDate + 'T12:00:00');
+  d.setDate(d.getDate() + 1);
+  state.currentDate = d.toISOString().slice(0,10);
+  renderStudents();
+}
+function dateChanged() {
+  state.currentDate = document.getElementById('session-date').value;
+  updateDateLabel();
+  renderStudents();
+}
+function updateDateLabel() {
+  const d = new Date(state.currentDate + 'T12:00:00');
+  const labels = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  document.getElementById('date-label').textContent = labels[d.getDay()];
+}
+
+// ─── Course CRUD ───
+function openAddCourse() {
+  state.editCourseId = null;
+  state.selectedEmoji = '📚';
+  state.selectedColor = COLORS[0];
+  document.getElementById('course-name').value = '';
+  document.getElementById('modal-course-title').textContent = 'Nuevo Curso';
+  renderEmojiGrid();
+  renderColorGrid();
+  openModal('modal-course');
+}
+function openEditCourse(id) {
+  const c = state.courses.find(x => x.id === id);
+  state.editCourseId = id;
+  state.selectedEmoji = c.icon;
+  state.selectedColor = c.color;
+  document.getElementById('course-name').value = c.name;
+  document.getElementById('modal-course-title').textContent = 'Editar Curso';
+  renderEmojiGrid();
+  renderColorGrid();
+  openModal('modal-course');
+}
+function saveCourse() {
+  const name = document.getElementById('course-name').value.trim();
+  if (!name) { document.getElementById('course-name').focus(); return; }
+  if (state.editCourseId) {
+    const c = state.courses.find(x => x.id === state.editCourseId);
+    c.name = name; c.icon = state.selectedEmoji; c.color = state.selectedColor;
+    toast('Curso actualizado');
+  } else {
+    state.courses.push({ id: uid(), name, icon: state.selectedEmoji, color: state.selectedColor });
+    toast('Curso creado');
+  }
+  save();
+  closeModal('modal-course');
+  renderCourses();
+}
+function deleteCourse(id) {
+  if (!confirm('¿Eliminar este curso y todos sus datos?')) return;
+  state.courses = state.courses.filter(c => c.id !== id);
+  state.students = state.students.filter(s => s.courseId !== id);
+  state.sessions = state.sessions.filter(s => s.courseId !== id);
+  save();
+  renderCourses();
+  toast('Curso eliminado');
+}
+
+// ─── Student CRUD ───
+function openAddStudent() {
+  state.editStudentId = null;
+  document.getElementById('student-name').value = '';
+  document.getElementById('modal-student-title').textContent = 'Nuevo Alumno';
+  openModal('modal-student');
+  setTimeout(() => document.getElementById('student-name').focus(), 100);
+}
+function saveStudent() {
+  const name = document.getElementById('student-name').value.trim();
+  if (!name) { document.getElementById('student-name').focus(); return; }
+  if (state.editStudentId) {
+    state.students.find(s => s.id === state.editStudentId).name = name;
+    toast('Alumno actualizado');
+  } else {
+    state.students.push({ id: uid(), courseId: state.currentCourse, name });
+    toast('Alumno agregado');
+  }
+  save();
+  closeModal('modal-student');
+  renderStudents();
+}
+function deleteStudent(id) {
+  if (!confirm('¿Eliminar este alumno?')) return;
+  state.students = state.students.filter(s => s.id !== id);
+  save();
+  renderStudents();
+  toast('Alumno eliminado');
+}
+
+// ─── Import students ───
+function openImport() { openModal('modal-import'); document.getElementById('import-text').value = ''; }
+function importStudents() {
+  const lines = document.getElementById('import-text').value.split('\n').map(l => l.trim()).filter(Boolean);
+  let added = 0;
+  lines.forEach(name => {
+    if (!state.students.find(s => s.courseId === state.currentCourse && s.name === name)) {
+      state.students.push({ id: uid(), courseId: state.currentCourse, name });
+      added++;
+    }
+  });
+  save();
+  closeModal('modal-import');
+  renderStudents();
+  toast(`${added} alumno${added!==1?'s':''} importado${added!==1?'s':''}`);
+}
+
+// ─── Export ───
+function exportCSV() {
+  const course = state.courses.find(c => c.id === state.currentCourse);
+  const students = courseStudents(state.currentCourse);
+  const session = getSession(state.currentCourse, state.currentDate) || { records: {} };
+  let csv = 'N°,Alumno,Asistencia,Puntos Sesión,Puntos Totales,Nota\n';
+  students.forEach((st, i) => {
+    const r = getRecord(session, st.id);
+    const att = r.att || '-';
+    const ptsSession = r.pts || 0;
+    const ptsTotal = totalPoints(st.id);
+    const note = (r.note || '').replace(/,/g, ';');
+    csv += `${i+1},"${st.name}",${att},${ptsSession},${ptsTotal},"${note}"\n`;
+  });
+  downloadFile(`asistencia_${course.name}_${state.currentDate}.csv`, 'text/csv', csv);
+}
+
+function exportHistoryCSV() {
+  const course = state.courses.find(c => c.id === state.currentCourse);
+  const students = courseStudents(state.currentCourse);
+  const sessions = state.sessions.filter(s => s.courseId === state.currentCourse).sort((a,b) => a.date.localeCompare(b.date));
+  let csv = 'Alumno,' + sessions.map(s => s.date).join(',') + ',Puntos Totales\n';
+  students.forEach(st => {
+    const cols = sessions.map(s => s.records[st.id]?.att || '-').join(',');
+    csv += `"${st.name}",${cols},${totalPoints(st.id)}\n`;
+  });
+  downloadFile(`historial_${course.name}.csv`, 'text/csv', csv);
+}
+
+function downloadFile(name, type, content) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([content], { type }));
+  a.download = name;
+  a.click();
+}
+
+// ─── Emoji / Color pickers ───
+function renderEmojiGrid() {
+  const grid = document.getElementById('emoji-grid');
+  grid.innerHTML = EMOJIS.map(e =>
+    `<div class="emoji-opt ${e===state.selectedEmoji?'selected':''}" onclick="selectEmoji('${e}')">${e}</div>`
+  ).join('');
+}
+function selectEmoji(e) { state.selectedEmoji = e; renderEmojiGrid(); }
+function renderColorGrid() {
+  const grid = document.getElementById('color-grid');
+  grid.innerHTML = COLORS.map(c =>
+    `<div class="color-opt ${c===state.selectedColor?'selected':''}" style="background:${c}" onclick="selectColor('${c}')"></div>`
+  ).join('');
+}
+function selectColor(c) { state.selectedColor = c; renderColorGrid(); }
+
+// ─── Modal helpers ───
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(el => {
+  el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') document.querySelectorAll('.modal-overlay.open').forEach(el => el.classList.remove('open'));
+  if (e.key === 'Enter' && document.getElementById('modal-student').classList.contains('open')) saveStudent();
+  if (e.key === 'Enter' && document.getElementById('modal-course').classList.contains('open')) saveCourse();
+});
+
+// ─── Toast ───
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+// ─── Date format ───
+function fmtDateShort(str) {
+  const d = new Date(str + 'T12:00:00');
+  return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
+}
+
+// ─── Demo data (first run) ───
+function seedDemo() {
+  if (state.courses.length > 0) return;
+  const cid1 = uid(), cid2 = uid();
+  state.courses = [
+    { id: cid1, name: 'Matemáticas 3°A', icon: '🧮', color: '#4f46e5' },
+    { id: cid2, name: 'Biología 2°B',    icon: '🔬', color: '#16a34a' },
+  ];
+  const names1 = ['García López, Juan','Mamani Quispe, Ana','Torres Flores, Luis','Quispe Condori, María','Flores Ramos, Carlos'];
+  const names2 = ['Pérez Mendoza, Sofía','Rojas Huanca, Diego','Lima Castro, Valentina','Chávez Torres, Andrés'];
+  names1.forEach(n => state.students.push({ id: uid(), courseId: cid1, name: n }));
+  names2.forEach(n => state.students.push({ id: uid(), courseId: cid2, name: n }));
+  save();
+}
+
+// ─── Init ───
+load();
+seedDemo();
+renderCourses();
+
+// ─── Service Worker ───
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js');
+  });
+}
+</script>
+</body>
+</html>

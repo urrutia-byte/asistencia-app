@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Fondo -->
+  <rect width="512" height="512" rx="100" fill="#4f46e5"/>
+  <!-- Portapapeles -->
+  <rect x="130" y="100" width="252" height="312" rx="18" fill="white" opacity="0.95"/>
+  <!-- Clip superior -->
+  <rect x="206" y="80" width="100" height="44" rx="12" fill="#c7d2fe"/>
+  <rect x="226" y="88" width="60" height="28" rx="8" fill="#4f46e5"/>
+  <!-- Líneas de contenido -->
+  <rect x="162" y="170" width="60" height="16" rx="8" fill="#4f46e5" opacity="0.25"/>
+  <rect x="162" y="210" width="60" height="16" rx="8" fill="#4f46e5" opacity="0.25"/>
+  <rect x="162" y="250" width="60" height="16" rx="8" fill="#4f46e5" opacity="0.25"/>
+  <rect x="162" y="290" width="60" height="16" rx="8" fill="#4f46e5" opacity="0.25"/>
+  <!-- Check marks -->
+  <circle cx="290" cy="178" r="16" fill="#16a34a"/>
+  <polyline points="282,178 288,184 298,170" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <circle cx="290" cy="218" r="16" fill="#16a34a"/>
+  <polyline points="282,218 288,224 298,210" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <circle cx="290" cy="258" r="16" fill="#dc2626"/>
+  <line x1="283" y1="251" x2="297" y2="265" stroke="white" stroke-width="3.5" stroke-linecap="round"/>
+  <line x1="297" y1="251" x2="283" y2="265" stroke="white" stroke-width="3.5" stroke-linecap="round"/>
+  <circle cx="290" cy="298" r="16" fill="#d97706"/>
+  <text x="290" y="304" text-anchor="middle" font-size="18" font-weight="bold" fill="white" font-family="sans-serif">T</text>
+  <!-- Estrella puntos -->
+  <circle cx="370" cy="370" r="62" fill="#4f46e5"/>
+  <circle cx="370" cy="370" r="55" fill="#fbbf24"/>
+  <text x="370" y="385" text-anchor="middle" font-size="48" font-weight="900" fill="#4f46e5" font-family="sans-serif">★</text>
+</svg>
